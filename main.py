@@ -8,7 +8,7 @@ import math
 dwg = ezdxf.readfile("test.dxf")
 
 msp = dwg.modelspace()
-
+ 
 def get_interpolation(x0, y0, x1, y1, resolution):
     seg_x = []
     seg_y = []
