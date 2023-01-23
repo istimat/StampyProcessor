@@ -30,8 +30,8 @@ class Line:
     def __init__(self, xpoints, ypoints) -> None:
         self.xpoints = xpoints
         self.ypoints = ypoints
-        self.seg_x = None
-        self.seg_y = None
+        self.seg_x = []
+        self.seg_y = []
         
     
 
@@ -74,12 +74,34 @@ for line in lines:
             seg_x, seg_y = get_interpolation(line.xpoints[index-1], line.ypoints[index-1],
                                              line.xpoints[index], line.ypoints[index],
                                              1)
-            line.seg_x = seg_x
-            line.seg_y = seg_y
+            line.seg_x += seg_x
+            line.seg_y += seg_y
             plt.scatter(seg_x, seg_y, color="red")
     plt.plot(line.xpoints, line.ypoints)
     plt.axis('scaled')
 
 print(lines[0].seg_x)
+print("")
+print(lines[0].seg_y)
 
 plt.show()
+
+def generate_gcode(lines,feedrate, power, dwell):
+    with open('output.nc', 'w') as nc:
+        nc.write('G90 G17\n')
+        for line in lines:
+            for index, point in enumerate(line.seg_x):
+                if index == 0:
+                    nc.write(f'G00 X{line.seg_x[index]} Y{line.seg_y[index]}\n')
+                    nc.write(f'M3 S{power}\n')
+                    nc.write(f'G04 P{dwell}\n')
+                    nc.write(f'S0\n')
+                else:
+                    nc.write(f'G01 X{line.seg_x[index]} Y{line.seg_y[index]}\n')
+                    nc.write(f'M3 S{power}\n')
+                    nc.write(f'G04 P{dwell}\n')
+                    nc.write(f'S0\n')
+            
+            
+                            
+generate_gcode(lines, 100, 100, 100)
