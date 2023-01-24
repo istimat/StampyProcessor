@@ -155,4 +155,4 @@ if __name__ == "__main__":
     remove_duplicates(lines, 0.1)
     plot_lines(lines)
     
-    generate_gcode(output_file, lines, feedrate=100, power=100, dwell=100)
+    generate_gcode(output_file, lines, feedrate=10000, power=100, dwell=0.001)
