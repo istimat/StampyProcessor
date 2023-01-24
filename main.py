@@ -1,14 +1,47 @@
-import sys
-from pprint import pprint
 import ezdxf
 import matplotlib.pyplot as plt
-import time
 import math
 
-dwg = ezdxf.readfile("test_small.dxf")
 
-msp = dwg.modelspace()
- 
+class Line:
+    def __init__(self, xpoints, ypoints) -> None:
+        self.xpoints = xpoints
+        self.ypoints = ypoints
+        self.seg_x = []
+        self.seg_y = []
+
+def read_dxf(input_filename):
+    dwg = ezdxf.readfile(input_filename)
+    msp = dwg.modelspace()
+    
+    return msp 
+
+
+def extract_lines(modelspace):
+    lines = []
+    for e in modelspace:
+        xpoints = []
+        ypoints = []
+        print(e.dxftype())
+        for index, point in enumerate(e):
+            xpoints.append(point[0])
+            ypoints.append(point[1])
+
+        lines.append(Line(xpoints, ypoints))
+    
+    return lines
+
+def get_min(lines):
+    x_min = 1000
+    y_min = 1000
+    for line in lines:
+        if x_min > min(line.xpoints):
+            x_min = min(line.xpoints)
+        if y_min > min(line.ypoints):
+            y_min = min(line.ypoints)
+    return x_min, y_min
+
+
 def get_interpolation(x0, y0, x1, y1, resolution):
     seg_x = []
     seg_y = []
@@ -26,37 +59,6 @@ def get_interpolation(x0, y0, x1, y1, resolution):
     
     return seg_x, seg_y
     
-class Line:
-    def __init__(self, xpoints, ypoints) -> None:
-        self.xpoints = xpoints
-        self.ypoints = ypoints
-        self.seg_x = []
-        self.seg_y = []
-        
-    
-
-lines = []
-for e in msp:
-    xpoints = []
-    ypoints = []
-    print(e.dxftype())
-    for index, point in enumerate(e):
-        xpoints.append(point[0])
-        ypoints.append(point[1])
-
-    lines.append(Line(xpoints, ypoints))
-    #break
-
-#print(lines)
-def get_min(lines):
-    x_min = 1000
-    y_min = 1000
-    for line in lines:
-        if x_min > min(line.xpoints):
-            x_min = min(line.xpoints)
-        if y_min > min(line.ypoints):
-            y_min = min(line.ypoints)
-    return x_min, y_min
 
 def translate_to_origin(lines, x_min, y_min):
     for line in lines:
@@ -65,29 +67,22 @@ def translate_to_origin(lines, x_min, y_min):
             line.ypoints[i] -=  y_min
 
 
-x_min, y_min = get_min(lines)
-translate_to_origin(lines, x_min, y_min)
+def interpolate_points(resolution):
+    for line in lines:
+        for index , point in enumerate(line.xpoints):
+            if index > 0:
+                seg_x, seg_y = get_interpolation(line.xpoints[index-1], line.ypoints[index-1],
+                                                 line.xpoints[index], line.ypoints[index],
+                                                 resolution)
+                line.seg_x += seg_x
+                line.seg_y += seg_y
+                plt.scatter(seg_x, seg_y, color="red")
+        plt.plot(line.xpoints, line.ypoints)
+        plt.axis('scaled')
+    plt.show()
 
-for line in lines:
-    for index , point in enumerate(line.xpoints):
-        if index > 0:
-            seg_x, seg_y = get_interpolation(line.xpoints[index-1], line.ypoints[index-1],
-                                             line.xpoints[index], line.ypoints[index],
-                                             0.5)
-            line.seg_x += seg_x
-            line.seg_y += seg_y
-            plt.scatter(seg_x, seg_y, color="red")
-    plt.plot(line.xpoints, line.ypoints)
-    plt.axis('scaled')
-
-print(lines[0].seg_x)
-print("")
-print(lines[0].seg_y)
-
-plt.show()
-
-def generate_gcode(lines,feedrate, power, dwell):
-    with open('output.nc', 'w') as nc:
+def generate_gcode(filename, lines,feedrate, power, dwell):
+    with open(filename, 'w') as nc:
         nc.write('G90 G17\n')
         for line in lines:
             for index, point in enumerate(line.seg_x):
@@ -103,5 +98,20 @@ def generate_gcode(lines,feedrate, power, dwell):
                     nc.write(f'S0\n')
             
             
+            
                             
-generate_gcode(lines, 100, 100, 100)
+
+if __name__ == "__main__":
+    
+    input_file = "data/test_small.dxf"
+    output_file = "data/output.nc"
+    
+    modelspace = read_dxf(input_file)
+    lines = extract_lines(modelspace)
+    
+    x_min, y_min = get_min(lines)
+    translate_to_origin(lines, x_min, y_min)
+    
+    interpolate_points(resolution = 0.2)
+    
+    generate_gcode(output_file, lines, 100, 100, 100)
