@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import time
 import math
 
-dwg = ezdxf.readfile("test.dxf")
+dwg = ezdxf.readfile("test_small.dxf")
 
 msp = dwg.modelspace()
  
@@ -16,7 +16,7 @@ def get_interpolation(x0, y0, x1, y1, resolution):
     segmented_length = 0
     while segmented_length < length:
         remaining = length - segmented_length
-        if remaining < resolution * 0.9:
+        if remaining < resolution * 0.5:
             seg_x.append(x1)
             seg_y.append(y1)
             break
@@ -73,7 +73,7 @@ for line in lines:
         if index > 0:
             seg_x, seg_y = get_interpolation(line.xpoints[index-1], line.ypoints[index-1],
                                              line.xpoints[index], line.ypoints[index],
-                                             1)
+                                             0.5)
             line.seg_x += seg_x
             line.seg_y += seg_y
             plt.scatter(seg_x, seg_y, color="red")
