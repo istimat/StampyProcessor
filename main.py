@@ -92,7 +92,7 @@ def generate_gcode(filename, lines,feedrate, power, dwell):
                     nc.write(f'G04 P{dwell}\n')
                     nc.write(f'S0\n')
                 else:
-                    nc.write(f'G01 X{line.seg_x[index]} Y{line.seg_y[index]}\n')
+                    nc.write(f'G01 X{line.seg_x[index]} Y{line.seg_y[index]} F{feedrate}\n')
                     nc.write(f'M3 S{power}\n')
                     nc.write(f'G04 P{dwell}\n')
                     nc.write(f'S0\n')
