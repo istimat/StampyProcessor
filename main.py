@@ -136,7 +136,22 @@ def generate_gcode(filename, lines,feedrate, power, dwell):
                     nc.write(f'G04 P{dwell}\n')
                     nc.write(f'S0\n')
             
-            
+ 
+def generate_solenoid_test_gcode(filename, lines, power, dwell):
+    with open(filename, 'w') as nc:
+        nc.write('G90 G17\n')
+        for line in lines:
+            for index, point in enumerate(line.seg_x):
+                if index == 0:
+                    nc.write(f'G00 X1.0 Y1.0 F1\n')
+                    nc.write(f'M3 S{power}\n')
+                    nc.write(f'G04 P{dwell}\n')
+                    nc.write(f'S0\n')
+                else:
+                    nc.write(f'G01 X1.0 Y1.0 F1\n')
+                    nc.write(f'M3 S{power}\n')
+                    nc.write(f'G04 P{dwell}\n')
+                    nc.write(f'S0\n')           
             
                             
 
@@ -144,6 +159,7 @@ if __name__ == "__main__":
     
     input_file = "data/test_small.dxf"
     output_file = "data/output.nc"
+    sol_output_file = "data/sol_output.nc"
     
     modelspace = read_dxf(input_file)
     lines = extract_lines(modelspace)
@@ -156,3 +172,4 @@ if __name__ == "__main__":
     plot_lines(lines)
     
     generate_gcode(output_file, lines, feedrate=10000, power=100, dwell=0.001)
+    generate_solenoid_test_gcode(sol_output_file, lines, power=10, dwell=0.001)
